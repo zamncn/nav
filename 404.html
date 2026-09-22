@@ -7,10 +7,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="author" content="tonny" />
     <title>404 · 页面不存在</title>
-    <!-- 角标取自原站 chenn.com.cn 的 assets/img/logo.png（粉色字标 Chenn）；404 页不参与 SEO，标题保持独立 -->
-    <link rel="icon" href="./assets/images/favicon.ico" sizes="any">
-    <link rel="icon" type="image/png" href="./assets/images/favicon.png" sizes="32x32">
-    <link rel="apple-touch-icon" href="./assets/images/favicon-180.png">
+    <!-- 角标取自原站 chenn.com.cn 的 assets/img/logo.png（粉色字标 Chenn）；404 页不参与 SEO，标题保持独立。
+         路径用绝对形式：404 会在任意深度被触发，相对路径在那个深度下会取不到图。 -->
+    <link rel="icon" href="/assets/images/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png" sizes="32x32">
+    <link rel="apple-touch-icon" href="/assets/images/favicon-180.png">
     <style>
     * {
         box-sizing: border-box;
@@ -101,7 +102,10 @@
         <p>你要找的页面不存在，或者链接已经失效。</p>
         <p>可以回到导航首页，从分类里重新找一个入口。</p>
         <div class="actions">
-            <a class="btn primary" id="home" href="./cn/index.html">回到导航首页</a>
+            <!-- 用绝对路径：404 会在任意深度被触发，相对路径 ./index.html 在
+                 /foo/ 这种带斜杠的多级路径下会解析成 /foo/index.html（再次 404）。
+                 2026-09-22 站点迁到根目录后，根首页就是 /index.html。 -->
+            <a class="btn primary" id="home" href="/index.html">回到导航首页</a>
             <a class="btn" href="#" id="back">返回上一页</a>
         </div>
     </div>
@@ -111,11 +115,12 @@
         var home = document.getElementById('home');
         var back = document.getElementById('back');
 
-        // GitHub Pages 项目页的站点根是 /仓库名/，按当前路径首段推断
+        // GitHub Pages *项目页*（user.github.io/repo/）的站点根是 /仓库名/，按当前路径首段推断；
+        // 绑了自定义域名时站点就在根目录，保持默认的 /index.html 即可。
         try {
             if (/(^|\.)github\.io$/i.test(location.hostname)) {
                 var segs = location.pathname.split('/').filter(Boolean);
-                if (segs.length) home.setAttribute('href', '/' + segs[0] + '/cn/index.html');
+                if (segs.length) home.setAttribute('href', '/' + segs[0] + '/index.html');
             }
         } catch (e) {}
 

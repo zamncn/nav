@@ -1,26 +1,47 @@
 /* ==========================================================================
-   页面背景图（夜景山脉）—— 固定铺满视口 + 主题化蒙版
+   nav.css — 布局与结构
    --------------------------------------------------------------------------
-   为什么用 body::before + position:fixed，而不是 background-attachment:fixed：
+   本站唯一的配色在 dark-mode.css，且该文件**必须在本文件之后加载**。
+
+   2026-09-22：按用户要求删除浅色模式。现状是「只有深色一套」：
+     · 配色变量（--d-* / --bg-veil / --sidebar-bg）全在 dark-mode.css 的 :root；
+       本文件的 :root 只放 --content-max 这类与主题无关的值。
+     · 本文件里仍残留少量历史浅色字面量（如 .nav-top-item 的 #2c2e2f、
+       搜索控件的 #fff / #e4ecf3）。它们**当前是死值** —— 被 dark-mode.css
+       以「同优先级 + 后加载」或「更高优先级」覆盖。看到别误以为浅色模式还在。
+     · 顶栏右侧的深浅色切换按钮、以及那两段主题 JS（初始化 + 切换）已删除，
+       **不要再加回来**；localStorage 里的旧 nav-theme 值也已无人读取。
+   ========================================================================== */
+
+/* ==========================================================================
+   背景图 —— body::before + position:fixed（不用 background-attachment:fixed）
+
+   为什么：
      ① iOS Safari 不支持 background-attachment:fixed（会退化成 scroll）；
      ② 本文档高 2700+px，若把背景挂在 body 上，cover 的定位区是"整个文档"，
         16:9 的图会被放大 4 倍且只露出一小块。
-   z-index:-1 生效前提：body 必须是 static（当前是），这样伪元素落在
-   文档流内容之下、画布底色（body 的 background-color）之上。
-   透明度由 --bg-veil 控制，dark-mode.css 里按主题覆盖。
+
+   ⚠️ z-index:-1 生效前提（**破坏它背景图会整片消失，别乱动**）：
+     · body 必须是 static（当前是）；
+     · **html 绝对不能有自己的 background-color。**
+       给 html 设了底色 → body 的底色就不再「向画布传播」→ body 改为自己
+       绘制那不透明底色；而 body 自身背景的绘制顺序排在 z-index:-1 的伪元素
+       **之后**，于是照片被整片盖住（页面只剩纯底色、卡片孤零零浮着）。
+       这条是真踩过的坑：删除浅色模式时把 `[data-theme="dark"] html` 的
+       前缀一并剥掉，变成 `html, body { background-color: ... }`，背景图当场没了。
+       ⇒ 底色只能挂在 body 上（见 dark-mode.css 第 2 节）。
+     · 蒙版浓度由 --bg-veil 控制（变量在 dark-mode.css 的 :root）。
    ========================================================================== */
 :root {
-    /* 浅色主题的白色蒙版浓度。
-       **别调回 .89/.92** —— 那样整页被压成一张白纸，夜景图完全看不见，
-       通栏/搜索区虽然是 transparent，看上去仍是一块白（"浅色下不通透"的根因就在这里）。
-       .72/.82 是拿四档浓度截图对比后定的：图片清晰可见、页面仍是浅色。
-       连带调整：分类标题已加深（见下方 h4 规则）、卡片白底 .72→.78（补回对比度）。 */
-    --bg-veil: linear-gradient(rgba(250, 250, 251, .72), rgba(250, 250, 251, .82));
-    --sidebar-bg: rgba(38, 40, 42, .82);
-
     /* 「宽屏」内容宽度：卡片区不再满铺，而是居中于这个最大宽度内。
        想更宽/更窄只改这一个值即可（常用 1440 / 1600 / 1680）。 */
     --content-max: 1600px;
+
+    /* ⚠️ 配色变量（--bg-veil / --sidebar-bg / --d-*）全部集中在 dark-mode.css，
+       因为那个文件最后加载、且本站已删除浅色模式。
+       这里**不要**再放浅色兜底值 —— 一旦放回来，dark-mode.css 没加载成功时
+       就会短暂露出浅色，而本站已没有浅色设计（对比度没审过）。
+       改配色请改 dark-mode.css 的 :root。 */
 }
 
 body::before {
@@ -46,13 +67,11 @@ body::before {
     }
 }
 
-/* 分类标题加深：浅色蒙版调淡后背景照片透出来，xenon 默认的 #555（17px/400）
-   在 ~.78 亮度的灰底上对比度掉到 4.3 附近，不够用；加深到 #3d4450 后 ≈7:1。
-   **必须带 [data-theme="light"] 前缀** —— 否则本条 (0,3,1) 会压过 dark-mode.css 的
-   `[data-theme="dark"] .text-gray` (0,2,0)，深色主题下标题会变黑字、直接看不见。 */
-[data-theme="light"] .page-container .main-content>h4.text-gray {
-    color: #3d4450;
-}
+/* 分类标题的颜色由 dark-mode.css 的 `.text-gray` 统一管（#e6eaf0）。
+   历史上这里有一条 [data-theme="light"] 的加深规则（#3d4450），
+   2026-09-22 删除浅色模式时一并删掉了 —— **别再写回浅色兜底**，
+   那条规则的选择器是 (0,3,1)，会压过 dark-mode.css 的 .text-gray (0,1,0)，
+   深色主题下标题会直接变成看不见的深灰。 */
 
 /* ==========================================================================
    主区域宽屏化：收掉 .main-content 的 30px 左右内边距，让卡片栅格铺满可用宽度
@@ -253,7 +272,7 @@ body::before {
 }
 
 footer.main-footer {
-    background-color: rgba(250, 250, 251, .58);
+    /* 底色由 dark-mode.css 的 footer.main-footer 提供（rgba(20,22,26,.58)） */
     -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
 }
@@ -266,12 +285,10 @@ footer.main-footer {
     height: 76px;
     cursor: pointer;
     padding: 0 10px;
-    /* 浅色卡片白底 .72→.78：蒙版调淡后底图变暗，白底抬高一点把卡片内文字的
-       对比度补回来（实测卡片内文字对比度和改前基本持平）。
-       深色主题由 dark-mode.css 的 [data-theme="dark"] .box2 以更高优先级覆盖。 */
-    background-color: rgba(255, 255, 255, .78) !important;
+    /* 底色 / 边框色都交给 dark-mode.css 的 .box2（本站唯一的配色）。
+       这里只留结构与尺寸 —— 别在这里写浅色兜底值。 */
+    border: 1px solid var(--d-border);
     border-radius: 4px;
-    border: 1px solid #e4ecf3;
     margin: 10px 0 0 0;
     -webkit-transition: all 0.3s ease;
     -moz-transition: all 0.3s ease;

@@ -1,13 +1,18 @@
 /* ==========================================================================
-   dark-mode.css — 深色 / 浅色主题
-   由 index.html 中的内联脚本在 <html> 上设置 data-theme="dark" | "light"
-   本文件必须在 nav.css 之后加载。
+   dark-mode.css — 本站唯一的配色（深色）
+
+   2026-09-22：按用户要求删除浅色模式。本文件已不再依赖 <html data-theme>，
+   旧前缀 [data-theme="dark"] 全部去掉了 —— 深色就是默认色，没有第二套。
+   所有配色都集中在下面的 :root 变量里，改色只改那里。
+
+   ⚠️ 必须在 nav.css 之后加载：nav.css 里有同优先级的历史规则（如 .box2），
+   靠加载顺序覆盖；调整 <link> 顺序会让配色失效。
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   1. 深色调色板（仅在 data-theme="dark" 时生效）
+   1. 调色板（本站唯一一套，直接挂在 :root 上）
    -------------------------------------------------------------------------- */
-[data-theme="dark"] {
+:root {
     --d-bg: #14161a;
     /* 页面底色 */
     --d-bg-elev: #1a1e25;
@@ -41,29 +46,31 @@
 
 /* --------------------------------------------------------------------------
    2. 页面底色与基础文字
+
+   ⚠️ 底色**只能挂在 body 上，绝不能写 `html, body`**。
+   原文是 `[data-theme="dark"] html, [data-theme="dark"] body`，其中
+   `[data-theme="dark"] html` 这条**从来就没匹配上过**（html 不可能是 html 的后代），
+   所以实际生效的只有 body 一条。2026-09-22 删除浅色模式时把前缀剥掉，
+   选择器变成 `html, body` —— html 拿到不透明底色后，body 的底色不再
+   「向画布传播」，body 改用自己绘制那不透明底色，而它排在 z-index:-1 的
+   body::before 之后绘制 ⇒ **整张背景照片被盖住，页面只剩纯底色**。
+   别再改成 `html, body`；要动请只动 body（见 nav.css 顶部的说明）。
    -------------------------------------------------------------------------- */
-[data-theme="dark"] html,
-[data-theme="dark"] body {
+body {
     background-color: var(--d-bg);
     color: var(--d-text);
 }
 
-/* 主题切换过渡：写在主题作用域之外，保证深→浅、浅→深两个方向都有过渡 */
-body {
-    -webkit-transition: background-color .25s ease, color .25s ease;
-    transition: background-color .25s ease, color .25s ease;
-}
-
-[data-theme="dark"] a {
+a {
     color: var(--d-accent);
 }
 
-[data-theme="dark"] a:hover,
-[data-theme="dark"] a:focus {
+a:hover,
+a:focus {
     color: #7ab0ff;
 }
 
-[data-theme="dark"] ::selection {
+::selection {
     background: #2f4a7a;
     color: #fff;
 }
@@ -76,17 +83,17 @@ body {
    挂在 .sidebar-menu 上会让它在 position:fixed 的内层面前变成包含块，
    内层就跟着页面滚走、侧栏固定失效。 */
 
-[data-theme="dark"] .sidebar-menu .main-menu a {
+.sidebar-menu .main-menu a {
     color: #9aa3ae;
     border-bottom-color: #262c36;
 }
 
-[data-theme="dark"] .sidebar-menu .main-menu a:hover,
-[data-theme="dark"] .sidebar-menu .main-menu li.active>a {
+.sidebar-menu .main-menu a:hover,
+.sidebar-menu .main-menu li.active>a {
     color: #fff;
 }
 
-[data-theme="dark"] .sidebar-menu .main-menu li.has-sub>a:before {
+.sidebar-menu .main-menu li.has-sub>a:before {
     color: #6d747a;
 }
 
@@ -95,41 +102,41 @@ body {
    -------------------------------------------------------------------------- */
 /* 顶栏里的站内导航项：深色下按原站做白字加粗 + 黑色文字阴影
    （原站 `.nav-link{color:#fff;font-weight:bold;text-shadow:0px 1px 0px #000}`） */
-[data-theme="dark"] .user-info-navbar .user-info-menu>li.nav-top-item>a,
-[data-theme="dark"] .user-info-navbar .user-info-menu>li.nav-top-item>.nav-plain {
+.user-info-navbar .user-info-menu>li.nav-top-item>a,
+.user-info-navbar .user-info-menu>li.nav-top-item>.nav-plain {
     color: #fff;
     text-shadow: 0 1px 0 rgba(0, 0, 0, .8);
 }
 
-[data-theme="dark"] .user-info-navbar .user-info-menu>li.nav-top-item>a:hover,
-[data-theme="dark"] .user-info-navbar .user-info-menu>li.nav-top-item>a:focus {
+.user-info-navbar .user-info-menu>li.nav-top-item>a:hover,
+.user-info-navbar .user-info-menu>li.nav-top-item>a:focus {
     color: #8fc0ff;
 }
 
 /* 顶栏底色透明（与 nav.css 配套）；毛玻璃保留，理由见 nav.css 的说明 */
-[data-theme="dark"] .user-info-navbar {
+.user-info-navbar {
     background-color: transparent;
     -webkit-backdrop-filter: blur(16px) saturate(1.2);
     backdrop-filter: blur(16px) saturate(1.2);
 }
 
-[data-theme="dark"] .user-info-navbar .user-info-menu>li>a {
+.user-info-navbar .user-info-menu>li>a {
     color: var(--d-text-2);
 }
 
-[data-theme="dark"] .user-info-navbar .user-info-menu>li>a:hover,
-[data-theme="dark"] .user-info-navbar .user-info-menu>li.open>a {
+.user-info-navbar .user-info-menu>li>a:hover,
+.user-info-navbar .user-info-menu>li.open>a {
     color: var(--d-text);
 }
 
 /* --------------------------------------------------------------------------
    5. 分类标题
    -------------------------------------------------------------------------- */
-[data-theme="dark"] .text-gray {
+.text-gray {
     color: #e6eaf0;
 }
 
-[data-theme="dark"] a.text-gray:hover {
+a.text-gray:hover {
     color: #fff;
 }
 
@@ -138,12 +145,12 @@ body {
    -------------------------------------------------------------------------- */
 /* !important 与 nav.css 里同名规则配套：用来压过 xenon 原库的
    .xe-widget.xe-conversations{background:#fff}（优先级更高） */
-[data-theme="dark"] .box2 {
+.box2 {
     background-color: var(--d-card-semi) !important;
     border-color: var(--d-border);
 }
 
-[data-theme="dark"] .box2:hover {
+.box2:hover {
     background-color: var(--d-card-hover-semi) !important;
     border-color: var(--d-border-hover);
     box-shadow: var(--d-shadow);
@@ -151,51 +158,51 @@ body {
 }
 
 /* 无链接卡片：hover 不换底色、不再抬起（与 nav.css 的 .box2.no-link 配套） */
-[data-theme="dark"] .box2.no-link:hover {
+.box2.no-link:hover {
     background-color: var(--d-card-semi) !important;
     border-color: var(--d-border);
     box-shadow: none;
     -webkit-box-shadow: none;
 }
 
-[data-theme="dark"] .xe-user-name {
+.xe-user-name {
     color: var(--d-text);
 }
 
-[data-theme="dark"] .xe-user-name strong {
+.xe-user-name strong {
     color: var(--d-text);
 }
 
-[data-theme="dark"] .xe-widget.xe-conversations .xe-body .xe-comment-entry .xe-comment .xe-user-name:hover strong {
+.xe-widget.xe-conversations .xe-body .xe-comment-entry .xe-comment .xe-user-name:hover strong {
     color: var(--d-accent);
 }
 
-[data-theme="dark"] .xe-comment p,
-[data-theme="dark"] .overflowClip_2 {
+.xe-comment p,
+.overflowClip_2 {
     color: var(--d-text-2);
 }
 
 /* 兜底：卡片内所有未显式着色的文字 */
-[data-theme="dark"] .box2,
-[data-theme="dark"] .box2 a,
-[data-theme="dark"] .box2 p {
+.box2,
+.box2 a,
+.box2 p {
     color: var(--d-text-2);
 }
 
-[data-theme="dark"] .box2 .xe-user-name strong {
+.box2 .xe-user-name strong {
     color: var(--d-text);
 }
 
 /* 图标浅底：深色页面下略降亮度，避免刺眼 */
-[data-theme="dark"] .xe-user-img .brand-svg,
-[data-theme="dark"] .xe-user-img .brand-img {
+.xe-user-img .brand-svg,
+.xe-user-img .brand-img {
     background-color: #e6ecf5;
 }
 
 /* --------------------------------------------------------------------------
    7. 页脚
    -------------------------------------------------------------------------- */
-[data-theme="dark"] footer.main-footer {
+footer.main-footer {
     background-color: rgba(20, 22, 26, .58);
     -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
@@ -203,144 +210,125 @@ body {
     color: var(--d-text-3);
 }
 
-[data-theme="dark"] footer.main-footer .footer-text a {
+footer.main-footer .footer-text a {
     color: var(--d-text-2);
 }
 
-[data-theme="dark"] footer.main-footer .footer-text a:hover {
+footer.main-footer .footer-text a:hover {
     color: var(--d-text);
 }
 
-[data-theme="dark"] footer.main-footer .go-up a {
+footer.main-footer .go-up a {
     background-color: rgba(255, 255, 255, .06);
     color: var(--d-text-2);
 }
 
-[data-theme="dark"] footer.main-footer .go-up a:hover {
+footer.main-footer .go-up a:hover {
     background-color: rgba(255, 255, 255, .12);
     color: #fff;
 }
 
 /* --------------------------------------------------------------------------
-   8. 主题切换按钮
-   -------------------------------------------------------------------------- */
-.theme-toggle {
-    cursor: pointer;
-}
-
-.theme-toggle>i {
-    margin-right: 4px;
-}
-
-[data-theme="dark"] .theme-toggle>i {
-    color: #ffcf5c;
-}
-
-.mobile-menu-toggle .theme-toggle {
-    padding: 0 6px;
-}
-
-/* --------------------------------------------------------------------------
    9. 滚动条
    -------------------------------------------------------------------------- */
-[data-theme="dark"] ::-webkit-scrollbar {
+::-webkit-scrollbar {
     width: 10px;
     height: 10px;
 }
 
-[data-theme="dark"] ::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
     background: var(--d-bg);
 }
 
-[data-theme="dark"] ::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
     background: #333b47;
     border-radius: 5px;
     border: 2px solid var(--d-bg);
 }
 
-[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
     background: #47525f;
 }
 
-[data-theme="dark"] {
+:root {
     scrollbar-color: #333b47 var(--d-bg);
 }
 
 /* --------------------------------------------------------------------------
    10. 其他组件兜底（下拉菜单 / 面板等，如后续启用）
    -------------------------------------------------------------------------- */
-[data-theme="dark"] .dropdown-menu,
-[data-theme="dark"] .panel,
-[data-theme="dark"] .modal-content,
-[data-theme="dark"] .popover {
+.dropdown-menu,
+.panel,
+.modal-content,
+.popover {
     background-color: var(--d-card);
     border-color: var(--d-border);
     color: var(--d-text);
 }
 
-[data-theme="dark"] .dropdown-menu>li>a:hover,
-[data-theme="dark"] .dropdown-menu>li>a:focus {
+.dropdown-menu>li>a:hover,
+.dropdown-menu>li>a:focus {
     background-color: var(--d-card-hover);
     color: var(--d-text);
 }
 
-[data-theme="dark"] .popover-title {
+.popover-title {
     background-color: var(--d-bg-elev);
     border-bottom-color: var(--d-border);
     color: var(--d-text);
 }
 
-[data-theme="dark"] .popover.bottom>.arrow:after {
+.popover.bottom>.arrow:after {
     border-bottom-color: var(--d-card);
 }
 
-[data-theme="dark"] .popover.top>.arrow:after {
+.popover.top>.arrow:after {
     border-top-color: var(--d-card);
 }
 
 /* --------------------------------------------------------------------------
    11. 搜索区控件（吸顶条本身已全透明，见 nav.css）
    -------------------------------------------------------------------------- */
-[data-theme="dark"] .search-engines .engine {
+.search-engines .engine {
     color: var(--d-text-2);
     background-color: #262c36;
     border-color: var(--d-border);
 }
 
-[data-theme="dark"] .search-engines .engine:hover {
+.search-engines .engine:hover {
     color: var(--d-text);
     border-color: var(--d-border-hover);
 }
 
-[data-theme="dark"] .search-engines .engine.active {
+.search-engines .engine.active {
     color: #fff;
     background-color: var(--d-accent);
     border-color: var(--d-accent);
 }
 
-[data-theme="dark"] .search-form input[type="text"] {
+.search-form input[type="text"] {
     color: var(--d-text);
     background-color: #232833;
     border-color: var(--d-border);
 }
 
-[data-theme="dark"] .search-form input[type="text"]::-webkit-input-placeholder {
+.search-form input[type="text"]::-webkit-input-placeholder {
     color: var(--d-text-3);
 }
 
-[data-theme="dark"] .search-form input[type="text"]::placeholder {
+.search-form input[type="text"]::placeholder {
     color: var(--d-text-3);
 }
 
-[data-theme="dark"] .search-form input[type="text"]:focus {
+.search-form input[type="text"]:focus {
     background-color: #1e232c;
     border-color: var(--d-accent);
 }
 
-[data-theme="dark"] .search-form button {
+.search-form button {
     background-color: var(--d-accent);
 }
 
-[data-theme="dark"] .search-form button:hover {
+.search-form button:hover {
     background-color: #3b82f6;
 }
