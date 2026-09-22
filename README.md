@@ -65,6 +65,20 @@ python -m http.server 8090
    （这样 `body` 的底色会「传播到画布」而不自己绘制）。给 `html` 设了底色，
    背景图会被整片盖住。详见 `nav.css` 顶部与 `dark-mode.css` 第 2 节的说明。
 
+## 改了 CSS 线上不生效？先看版本号
+
+站点前面挂着 Cloudflare，而在 GitHub Pages 上 CSS/JS 会带
+`cache-control: max-age=14400`，**被 CF 缓存 4 小时**（HTML 不缓存）。
+所以「改完 CSS 推送了，线上还是旧样式」通常不是代码问题，是缓存。
+
+本站已用**版本查询串**根治：`index.html` 里引的是
+`assets/css/nav.css?v=20260922b` 这种形式。每次改完 CSS（或任何本地静态资源），
+把生成脚本 `build_page.py` 里的 `ASSET_VER` 改一下再重新生成就行
+（HTML 本身不被缓存，新 HTML 指向新 URL，CF 会重新回源取）。
+
+万一还是看到旧样式（例如改了 `assets/` 下别的文件、或在 CF 里开了
+「Cache Everything」），去 Cloudflare 面板 **Purge Everything** 即可。
+
 ## 说明
 
 基于开源的 [WebStackPage](https://github.com/WebStackPage/WebStackPage.github.io)（Xenon 后台模板）改造，

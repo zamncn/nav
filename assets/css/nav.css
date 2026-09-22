@@ -3,6 +3,10 @@
    --------------------------------------------------------------------------
    本站唯一的配色在 dark-mode.css，且该文件**必须在本文件之后加载**。
 
+   ⚠️ 改完本文件（或 dark-mode.css）请把 `build_page.py` 里的 ASSET_VER 改一下再
+   重新生成 index.html —— 否则 Cloudflare 会继续发缓存里那份旧 CSS
+   （GitHub Pages 给 CSS 发 max-age=14400，CF 会缓存 4 小时）。
+
    2026-09-22：按用户要求删除浅色模式。现状是「只有深色一套」：
      · 配色变量（--d-* / --bg-veil / --sidebar-bg）全在 dark-mode.css 的 :root；
        本文件的 :root 只放 --content-max 这类与主题无关的值。
