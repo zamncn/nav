@@ -1,0 +1,9 @@
+# WorkBuddy 项目数据（记忆 / 本地临时文件）—— 不发布到站点
+.workbuddy/
+
+# 编辑器 / 系统文件
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini

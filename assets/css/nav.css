@@ -1,45 +1,423 @@
+/* ==========================================================================
+   页面背景图（夜景山脉）—— 固定铺满视口 + 主题化蒙版
+   --------------------------------------------------------------------------
+   为什么用 body::before + position:fixed，而不是 background-attachment:fixed：
+     ① iOS Safari 不支持 background-attachment:fixed（会退化成 scroll）；
+     ② 本文档高 2700+px，若把背景挂在 body 上，cover 的定位区是"整个文档"，
+        16:9 的图会被放大 4 倍且只露出一小块。
+   z-index:-1 生效前提：body 必须是 static（当前是），这样伪元素落在
+   文档流内容之下、画布底色（body 的 background-color）之上。
+   透明度由 --bg-veil 控制，dark-mode.css 里按主题覆盖。
+   ========================================================================== */
+:root {
+    /* 浅色主题的白色蒙版浓度。
+       **别调回 .89/.92** —— 那样整页被压成一张白纸，夜景图完全看不见，
+       通栏/搜索区虽然是 transparent，看上去仍是一块白（"浅色下不通透"的根因就在这里）。
+       .72/.82 是拿四档浓度截图对比后定的：图片清晰可见、页面仍是浅色。
+       连带调整：分类标题已加深（见下方 h4 规则）、卡片白底 .72→.78（补回对比度）。 */
+    --bg-veil: linear-gradient(rgba(250, 250, 251, .72), rgba(250, 250, 251, .82));
+    --sidebar-bg: rgba(38, 40, 42, .82);
+
+    /* 「宽屏」内容宽度：卡片区不再满铺，而是居中于这个最大宽度内。
+       想更宽/更窄只改这一个值即可（常用 1440 / 1600 / 1680）。 */
+    --content-max: 1600px;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: -1;
+    background-image: var(--bg-veil), url("../images/bg/night-mountain.jpg");
+    background-size: cover, cover;
+    background-position: center 46%, center 46%;
+    background-repeat: no-repeat, no-repeat;
+    background-color: #14161a;
+    pointer-events: none;
+}
+
+/* 小屏用 1280 宽的轻量版（157KB -> 67KB），只在窄屏时才会被下载 */
+@media screen and (max-width: 767px) {
+    body::before {
+        background-image: var(--bg-veil), url("../images/bg/night-mountain-1280.jpg");
+    }
+}
+
+/* 分类标题加深：浅色蒙版调淡后背景照片透出来，xenon 默认的 #555（17px/400）
+   在 ~.78 亮度的灰底上对比度掉到 4.3 附近，不够用；加深到 #3d4450 后 ≈7:1。
+   **必须带 [data-theme="light"] 前缀** —— 否则本条 (0,3,1) 会压过 dark-mode.css 的
+   `[data-theme="dark"] .text-gray` (0,2,0)，深色主题下标题会变黑字、直接看不见。 */
+[data-theme="light"] .page-container .main-content>h4.text-gray {
+    color: #3d4450;
+}
+
+/* ==========================================================================
+   主区域宽屏化：收掉 .main-content 的 30px 左右内边距，让卡片栅格铺满可用宽度
+   （页面本身没有 max-width 上限，唯一的"留白"就是这两条 padding）
+   栅格自带 5px 槽（.row>[class*="col-"] 的 padding），所以不会贴死边缘。
+   注意：.nav-search 原来用负外边距做通栏，padding 归零后必须同步改成 0，
+        否则会左右各溢出 30px。
+   ========================================================================== */
+.page-container .main-content {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* 上面把左右内边距归零后，这两个"通栏"元素就会各多出 30px（横向滚动）。
+   它们原本靠负外边距抵消主区域的 30px 内边距：
+     xenon-core.css:2280  .user-info-navbar      { margin: -30px }
+     xenon-core.css:2187  footer.main-footer     { margin-left/right: -30px }
+     xenon-core.css:4007  （≤768px 时再声明一次 footer 的负边距）
+   这里把负边距归零，它们各自的 30px 内边距保留 —— 内容仍与卡片栅格对齐。
+   注意 navbar 的负 margin 是四边简写，只覆盖左右，上下那 -30px 要继续留着
+   （它靠这个贴到主区域顶部，padding-top 仍是 30px）。 */
+.page-container .main-content .navbar.user-info-navbar,
+.page-container .main-content footer.main-footer {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* ==========================================================================
+   「宽屏」而不是「全屏」：内容限宽 + 居中
+   --------------------------------------------------------------------------
+   .main-content 是 display:table-cell（父级 .page-container 是 display:table），
+   表格单元格会忽略 max-width + margin:auto，所以限宽必须加在它的直接子元素上。
+   .main-content 的直接子元素只有三类需要处理：
+     ① 分类标题 h4  ② 卡片栅格 .row  ③ 页脚内层 .footer-inner
+   搜索区 .nav-search 本身全透明、内容由 flex 居中，居中轴与这些容器重合，
+   因此不需要单独处理。
+   ========================================================================== */
+.page-container .main-content>h4.text-gray,
+.page-container .main-content>.row,
+.page-container .main-content>footer.main-footer .footer-inner {
+    max-width: var(--content-max);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ==========================================================================
+   顶栏里的站内导航项（主页 / 关于本站 / 私人 / C-ERP / Work. / Bai_pan）
+   --------------------------------------------------------------------------
+   位置：直接放在顶栏 `.user-info-menu.left-links` 里、**折叠按钮后面**（用户明确指定），
+   不是另起一条通栏。文案与顺序取自原站顶栏菜单。
+   度量沿用 xenon 的 `.user-info-menu>li>a{padding:30px 20px}`（顶栏 77px 高就是它撑起来的），
+   这里只改字号/字重/颜色，**不要动 padding 的纵向值**，否则顶栏会跟着变高。
+   深色下按原站做白字加粗 + 黑色文字阴影（原站 `.nav-link{color:#fff;font-weight:bold;
+   text-shadow:0px 1px 0px #000}`）。
+   ========================================================================== */
+.user-info-navbar .user-info-menu>li.nav-top-item>a,
+.user-info-navbar .user-info-menu>li.nav-top-item>.nav-plain {
+    /* 横向内边距 20→10：相邻两项的间距由 40px 收到 20px（用户嫌太松）。
+       纵向 30px 必须保持 xenon 原值，顶栏 77px 高就是它 + 下边框撑起来的。 */
+    padding-left: 10px;
+    padding-right: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #2c2e2f;
+    white-space: nowrap;
+}
+
+/* 无链接的顶栏项（如「私人」）：渲染成 <span> 而不是 <a>。
+   span 默认是 inline，不把 <a> 的盒模型补回来，padding 撑不开、顶栏会塌。
+   刻意不给它 :hover 变色 —— 它本来就不可点。 */
+.user-info-navbar .user-info-menu>li.nav-top-item>.nav-plain {
+    position: relative;
+    display: block;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid #fff;
+    top: 1px;
+    z-index: 5;
+}
+
+/* 第一项再收一点，让它贴近左侧的折叠按钮（原本左侧 20px 留白显得发散）。
+   left-links 里第 1 个 li 是折叠按钮，站内导航从第 2 个 li 开始，所以用 nth-child(2)。 */
+.user-info-navbar .user-info-menu.left-links>li.nav-top-item:nth-child(2)>a {
+    padding-left: 4px;
+}
+
+.user-info-navbar .user-info-menu>li.nav-top-item>a:hover,
+.user-info-navbar .user-info-menu>li.nav-top-item>a:focus {
+    color: #4d90fe;
+}
+
+/* 中等宽度收一点横向内边距：6 个中文项 + 折叠按钮 + 右侧主题按钮
+   在 992px 且侧栏展开时容易挤到换行（顶栏变两行）。
+   注意每一档都必须比上一档更小，否则档位之间会出现"越窄间距越大"的倒挂。 */
+@media screen and (max-width: 1199px) {
+    .user-info-navbar .user-info-menu>li.nav-top-item>a,
+    .user-info-navbar .user-info-menu>li.nav-top-item>.nav-plain {
+        padding-left: 8px;
+        padding-right: 8px;
+        font-size: 14px;
+    }
+}
+
+/* 更窄再收一档：实测 850px + 侧栏展开时刚好差 12px 就会换行，800px 差 60px。 */
+@media screen and (max-width: 991px) {
+    .user-info-navbar .user-info-menu>li.nav-top-item>a,
+    .user-info-navbar .user-info-menu>li.nav-top-item>.nav-plain {
+        padding-left: 6px;
+        padding-right: 6px;
+        font-size: 13px;
+    }
+}
+
+/* 顶栏：**保持通栏，内容贴两端**（左侧汉堡按钮在最左、右侧主题按钮在最右），
+   不跟着内容容器一起往里缩 —— 这是用户明确要求的（"顶栏的图标还是要靠两边固定"）。
+   注意别给 .user-info-navbar 加 max-width 或按内容宽度算的 padding，
+   那会把左右两组图标一起推进内容区。 */
+
+
+/* ==========================================================================
+   让"外壳"半透明 + 毛玻璃：否则侧栏 / 页脚会变成压在照片上的实心色块。
+   卡片不做 backdrop-filter（159 个元素会明显掉帧），只用半透明。
+   --------------------------------------------------------------------------
+   顶栏底色已按用户要求改为**透明**。这里刻意保留 backdrop-filter：
+   顶栏一直吸顶，卡片会从它下面滚过去，没有模糊就会直接叠在导航文字上。
+   模糊只作用在"滚过去的内容"，而背景图是 position:fixed 的、同一视口区域
+   永远是同一块平滑画面，对它几乎看不出差别。要去掉模糊删这两行即可。
+   ========================================================================== */
+.user-info-navbar {
+    background-color: transparent;
+    -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    backdrop-filter: blur(16px) saturate(1.2);
+}
+
+/* ==========================================================================
+   侧栏固定 + 顶栏固定（桌面端；手机端侧栏是顶部横条，保持原样）
+   --------------------------------------------------------------------------
+   侧栏本来就是 xenon 的内置"固定侧栏"（元素上已带 .sidebar-menu.fixed，
+   见 xenon-core.css:1191 -> .sidebar-menu-inner { position: fixed; inset }）。
+   **关键陷阱**：backdrop-filter 会让元素成为 position:fixed 后代的包含块 ——
+   背景和毛玻璃挂在 .sidebar-menu 上时，内层就"固定"到整根 2750px 高的表格
+   单元格上，跟着页面一起滚走，等于没固定（本次就是这么坏掉的）。
+   所以桌面端把背景搬到内层，外层交还给表格布局。
+   ========================================================================== */
+/* 手机端（侧栏在顶部、内层不是 fixed）：背景仍挂在外层 */
+.sidebar-menu {
+    background-color: var(--sidebar-bg);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+}
+
+@media screen and (min-width: 769px) {
+    .sidebar-menu {
+        background-color: transparent;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    .sidebar-menu.fixed .sidebar-menu-inner {
+        background-color: var(--sidebar-bg);
+        -webkit-backdrop-filter: blur(16px);
+        backdrop-filter: blur(16px);
+        /* 原库这里是 overflow:hidden，会把折叠态悬停浮出的分类名胶囊裁掉 */
+        overflow: visible;
+    }
+
+    /* 原库 xenon-core.css:1220 有一条 .sidebar-menu.collapsed .sidebar-menu-inner
+       { position: relative }（就在这个 min-width:768 媒体查询里，优先级同 (0,3,0)
+       但位置比 1191 的 fixed 更靠后）—— 于是"折叠态"下侧栏反而不固定。
+       这里用多一个类(0,4,0)压过它，让折叠态也真正钉在视口上。 */
+    .sidebar-menu.collapsed.fixed .sidebar-menu-inner {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: inherit;
+    }
+
+    /* 顶栏固定：用 sticky 而不是 fixed —— 不脱离文档流，搜索区不会往上跳 77px。
+       它自带 margin:-30px 贴着主区域顶部，sticky 的 top:0 正好落在这个位置。 */
+    .page-container .main-content .navbar.user-info-navbar {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        z-index: 20;
+    }
+}
+
+/* 矮屏兜底（折叠态专用）：折叠态侧栏内容约 650px（logo 74 + 菜单 576），视口比它矮时
+   最后几项够不到。这种屏下改成"内部可滚动"，代价是折叠态悬浮分类名会被裁 —— 矮屏优先保证能用。
+   展开态**不靠这条**：菜单改竖排后内容约 958px，任何常见视口高度都可能放不下，
+   所以展开态的滚动在下面「图标在上、文字在下」那块里无条件放开了。 */
+@media screen and (min-width: 769px) and (max-height: 720px) {
+    .sidebar-menu.fixed .sidebar-menu-inner {
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+}
+
+footer.main-footer {
+    background-color: rgba(250, 250, 251, .58);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+}
+
+/* 卡片：半透明（两种主题都透出背景图）。
+   必须用 !important：xenon 原库有一条 .xe-widget.xe-conversations{background:#fff}
+   （xenon-components.css:6406），用的是 background 简写、优先级 (0,2,0)，
+   比 .box2 高，不加重就无法覆盖。深色主题的同名规则见 dark-mode.css。 */
 .box2 {
-    height: 86px;
+    height: 76px;
     cursor: pointer;
-    border-radius: 4px;
-    padding: 0px 30px 0px 30px;
-    background-color: #fff;
+    padding: 0 10px;
+    /* 浅色卡片白底 .72→.78：蒙版调淡后底图变暗，白底抬高一点把卡片内文字的
+       对比度补回来（实测卡片内文字对比度和改前基本持平）。
+       深色主题由 dark-mode.css 的 [data-theme="dark"] .box2 以更高优先级覆盖。 */
+    background-color: rgba(255, 255, 255, .78) !important;
     border-radius: 4px;
     border: 1px solid #e4ecf3;
-    margin: 20px 0 0 0;
+    margin: 10px 0 0 0;
     -webkit-transition: all 0.3s ease;
     -moz-transition: all 0.3s ease;
     -o-transition: all 0.3s ease;
     transition: all 0.3s ease;
+}
+
+/* ==========================================================================
+   卡片网格：宽屏每行 10 个，换行（末行不满）时靠左对齐
+   （flex 覆盖 Bootstrap 的 col 浮动；justify-content 必须为 start，
+     否则末行会被居中，与上面各行的列对不齐）
+   ========================================================================== */
+/* 行：左右外边距由 -5px 改为 auto —— 配合 max-width 让整行在可用宽度内居中。
+   主区域 padding 已归零，原来那条 -5px 会让整行左右各溢 5px、产生 10px 横向滚动；
+   归零后由子列的 5px 内边距充当槽位：同一行相邻卡片间距 10px、最外侧各有 5px 留白。 */
+.main-content>.row {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    -webkit-box-pack: start;
+    -ms-flex-pack: start;
+    justify-content: flex-start;
+    max-width: var(--content-max);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* 清掉 Bootstrap 的 .row 清除浮动伪元素（在 flex 容器里会变成占位的 flex item） */
+.main-content>.row:before,
+.main-content>.row:after {
+    display: none;
+    content: none;
+}
+
+.main-content>.row>[class*="col-"] {
+    float: none;
+    width: 10%;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+@media screen and (min-width: 992px) and (max-width: 1199px) {
+    .main-content>.row>[class*="col-"] {
+        width: 12.5%;
+    }
+}
+
+@media screen and (min-width: 768px) and (max-width: 991px) {
+    .main-content>.row>[class*="col-"] {
+        width: 16.6667%;
+    }
+}
+
+@media screen and (min-width: 480px) and (max-width: 767px) {
+    .main-content>.row>[class*="col-"] {
+        width: 25%;
+    }
+}
+
+@media screen and (max-width: 479px) {
+    .main-content>.row>[class*="col-"] {
+        width: 33.3333%;
+    }
 }
 
 .box2:hover {
-    transform: translateY(-6px);
-    -webkit-transform: translateY(-6px);
-    -moz-transform: translateY(-6px);
-    box-shadow: 0 26px 40px -24px rgba(0, 36, 100, 0.3);
-    -webkit-box-shadow: 0 26px 40px -24px rgba(0, 36, 100, 0.3);
-    -moz-box-shadow: 0 26px 40px -24px rgba(0, 36, 100, 0.3);
+    transform: translateY(-3px);
+    -webkit-transform: translateY(-3px);
+    -moz-transform: translateY(-3px);
+    box-shadow: 0 14px 26px -16px rgba(0, 36, 100, 0.3);
+    -webkit-box-shadow: 0 14px 26px -16px rgba(0, 36, 100, 0.3);
+    -moz-box-shadow: 0 14px 26px -16px rgba(0, 36, 100, 0.3);
     -webkit-transition: all 0.3s ease;
     -moz-transition: all 0.3s ease;
     -o-transition: all 0.3s ease;
     transition: all 0.3s ease;
 }
 
-.xe-comment-entry img {
-    float: left;
+/* 去掉超链接的卡片（如「留言&建议」）：外观照旧，但不再是链接 ——
+   连同手型光标和 hover 浮起一起去掉（浮起本身就是"这里能点"的暗示）。
+   no-link 类由 build_page.py 的 UNLINK_LINKS 打上。 */
+.box2.no-link,
+.box2.no-link:hover {
+    cursor: default;
+    transform: none;
+    -webkit-transform: none;
+    -moz-transform: none;
+    box-shadow: none;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+}
+
+/* ==========================================================================
+   卡片内部：**上图下文字**，图标与名称作为一列，在卡片内水平 + 垂直居中
+   （原实现是「float 图标 + absolute 定位文字」的左图右文，这里统一改成
+     纵向 flex：图标在上、名称在下。间距用 gap，不要再给图标 margin-right）
+   ========================================================================== */
+.xe-comment-entry {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    height: 100%;
+    gap: 5px;
+}
+
+.xe-comment-entry .xe-user-img {
     display: block;
-    margin-right: 10px;
+    -ms-flex-negative: 0;
+    flex: none;
+    line-height: 0;
 }
+
+.xe-comment-entry img {
+    display: block;
+    margin-right: 0;
+}
+
+/* 文字块：退出 absolute 定位，改回普通 flex item；
+   max-width:100% 让长名称在卡片宽度内省略，而不是把卡片撑开 */
 .xe-comment {
-    transform: translateY(-50%);
-    position: absolute;
-    margin-left: 50px;
-    top: 50%;
+    position: static;
+    top: auto;
+    margin-left: 0;
+    max-width: 100%;
+    min-width: 0;
+    text-align: center;
+    -webkit-transform: none;
+    -ms-transform: none;
+    transform: none;
 }
+
 .xe-comment p {
     margin-bottom: 0px;
-    margin-right: 15px;
+    margin-right: 0;
 }
 .overflowClip_1 {
     overflow: hidden;
@@ -64,4 +442,344 @@
 
 .img-circle {
     padding: 7px 0;
+}
+
+/* ==========================================================================
+   品牌图标（SVG 精灵 / 图片）—— 统一 36×36 图标盒 + 浅色底
+   浅色底的作用：原站图标多为深色 logo，直接放在深色卡片上会"消失"，
+   给一块浅底后深浅两种主题下都能看清（白色图标另由 .brand-invert 处理）。
+   纵向排版下图标是视觉主体，去掉 margin-right（行距改由父级 gap 提供）。
+   ========================================================================== */
+.xe-user-img .brand-svg,
+.xe-user-img .brand-img {
+    display: block;
+    -ms-flex-negative: 0;
+    flex: none;
+    width: 36px;
+    height: 36px;
+    padding: 4px;
+    margin-right: 0;
+    background-color: #f4f7fb;
+    border-radius: 8px;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    -o-object-fit: contain;
+    object-fit: contain;
+}
+
+/* 名称文字：窄卡片下适当收一点，避免英文站名被截太早 */
+.xe-user-name strong {
+    font-size: 12px;
+}
+
+/* ==========================================================================
+   顶部导航栏按钮：去掉 xenon 默认的白色描边
+   （深色主题下 li 的左右白线与 a 的白色底边会围成一个"白框"，很扎眼）
+   ========================================================================== */
+.user-info-navbar .user-info-menu>li {
+    border-left-color: transparent;
+    border-right-color: transparent;
+}
+
+.user-info-navbar .user-info-menu>li>a {
+    border-bottom-color: transparent;
+}
+
+/* ==========================================================================
+   搜索区（必应 / 谷歌 / 必应翻译）—— 放大 + 通栏 + 随页面滚动
+   通栏：主区域左右内边距已归零（见上方"主区域宽屏化"），所以它天然通栏。
+   背景：全透明（不染色、不描边、不模糊），背景图原样透出来。
+   定位：普通文档流（原来是 sticky 吸顶）。改成随页面滚动后，滚动时它会被
+        **上方的固定顶栏**盖住并滚出视野；因为不再压住内容，也就没有叠字问题。
+   ========================================================================== */
+.nav-search {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    margin: 0 0 24px;
+    padding: 192px 30px;
+    /* 全透明：不染色、不描边、不做模糊，背景图原样透出来 */
+    background-color: transparent;
+    border: 0;
+}
+
+/* 小屏下不跟着放大：吸顶条太高会吃掉半个屏幕 */
+@media screen and (max-width: 767px) {
+    .nav-search {
+        padding: 96px 24px;
+    }
+}
+
+.search-engines {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.search-engines .engine {
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #6b7280;
+    background-color: #f5f7fa;
+    border: 1px solid #e4ecf3;
+    border-radius: 999px;
+    cursor: pointer;
+    outline: 0;
+    -webkit-transition: all .2s ease;
+    transition: all .2s ease;
+}
+
+.search-engines .engine:hover {
+    color: #2c2e2f;
+    border-color: #cfd8e3;
+}
+
+.search-engines .engine.active {
+    color: #fff;
+    background-color: #4d90fe;
+    border-color: #4d90fe;
+}
+
+.search-engines .engine-icon {
+    -ms-flex-negative: 0;
+    flex: none;
+    width: 20px;
+    height: 20px;
+}
+
+/* 选中态：品牌图标转成白色，保证在蓝底上有足够对比度 */
+.search-engines .engine.active .engine-icon {
+    -webkit-filter: brightness(0) invert(1);
+    filter: brightness(0) invert(1);
+}
+
+.search-form {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    width: 100%;
+    max-width: 780px;
+    gap: 10px;
+}
+
+.search-form input[type="text"] {
+    -webkit-box-flex: 1;
+    -ms-flex: 1 1 auto;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 54px;
+    padding: 0 18px;
+    font-size: 15px;
+    color: #2c2e2f;
+    background-color: #f7f9fc;
+    border: 1px solid #e4ecf3;
+    border-radius: 8px;
+    outline: 0;
+    -webkit-transition: all .2s ease;
+    transition: all .2s ease;
+}
+
+.search-form input[type="text"]:focus {
+    background-color: #fff;
+    border-color: #4d90fe;
+}
+
+.search-form button {
+    -ms-flex-negative: 0;
+    flex: 0 0 auto;
+    width: 68px;
+    height: 54px;
+    padding: 0;
+    font-size: 18px;
+    color: #fff;
+    background-color: #4d90fe;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    -webkit-transition: background-color .2s ease;
+    transition: background-color .2s ease;
+}
+
+.search-form button:hover {
+    background-color: #3b82f6;
+}
+
+/* ==========================================================================
+   侧栏折叠态：悬浮在图标上时显示分类名
+   ========================================================================== */
+@media screen and (min-width: 768px) {
+    .sidebar-menu.collapsed .main-menu>li>a>.title {
+        display: none;
+        position: absolute;
+        left: 100%;
+        top: 50%;
+        -webkit-transform: translateY(-50%);
+        transform: translateY(-50%);
+        margin-left: 6px;
+        padding: 6px 12px;
+        white-space: nowrap;
+        font-size: 13px;
+        line-height: 1.4;
+        color: #fff;
+        background-color: #0e62c7;
+        border-radius: 4px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, .35);
+        pointer-events: none;
+        z-index: 99999;
+    }
+
+    .sidebar-menu.collapsed .main-menu>li:hover>a>.title {
+        display: block;
+    }
+}
+
+/* ==========================================================================
+   侧栏顶部标识（图片版，替代原模板的图片 logo 与之前的文字版）
+   --------------------------------------------------------------------------
+   资源由 .workbuddy/tmp/make_logo.py 从源站 chenn.com.cn/assets/img/logo.png
+   生成（透明底、2x）：
+     logo.png       粉色衬线字标「Chenn」+ 副标题，展开态显示宽 135px
+     logo-mark.png  首字母「C」方标，折叠态显示 31x32（见下方 40px 窄栏一节）
+   侧面栏底色两种主题都是深色（--sidebar-bg），浅粉字标在两边都够清楚，
+   所以不需要浅色主题单独一套图。
+   ========================================================================== */
+.sidebar-menu .logo-env .logo .logo-img {
+    display: block;
+    /* 150 → 135：展开态栏宽由 280 收到 187，可用宽度 = 187 - 26*2 = 135 */
+    width: 135px;
+    height: auto;
+}
+
+.sidebar-menu.collapsed .logo-env .logo-collapsed .logo-mark-img {
+    display: inline-block;
+    width: 31px;
+    height: 32px;
+}
+
+/* ==========================================================================
+   侧栏宽度（用户两次调整，同一块里维护）
+   --------------------------------------------------------------------------
+   展开态 280px → 187px （"减少 1/3"，280 * 2/3 ≈ 186.7，取整 187）
+   折叠态  80px →  40px （"缩到现在的 1/2"）
+   xenon 把 280 / 80 写死在 xenon-core.css:920 的 `.sidebar-menu{width:280px}` 与
+   :1206、:1217 的 `.collapsed{width:80px}` / `.collapsed+.main-content .main-footer{left:80px}`。
+   展开态**只有 width 一处依赖**（全库 "left:280px" 仅 #chat 一条，与本页无关，页脚在文档流里）。
+   菜单项本身不用动：`.main-menu a{padding:13px 5px}`，标题 + 图标在 187px 里仍有富余；
+   折叠态悬浮分类名胶囊用 `left:100%`，跟着容器走。
+   ⚠️ 必须包在 `min-width:768px` 里（与原库同一断点）—— 手机端（≤767px）侧栏是顶部横条，
+   不加这层媒体查询会把它也压窄。
+   ========================================================================== */
+@media screen and (min-width: 768px) {
+    .sidebar-menu {
+        width: 187px;
+    }
+
+    .sidebar-menu .logo-env {
+        /* 左右内边距 45 → 26：栏宽只剩 187，45*2 会把 logo 挤成 97px 宽 */
+        padding-left: 26px;
+        padding-right: 26px;
+    }
+
+    .sidebar-menu.collapsed {
+        width: 40px;
+    }
+
+    .sidebar-menu.collapsed+.main-content .main-footer {
+        left: 40px;
+    }
+}
+
+/* ==========================================================================
+   展开态侧栏菜单项：图标在上、文字在下（居中对齐）
+   --------------------------------------------------------------------------
+   用户要求（2026-09-22 晚）：展开态每一项改成竖排 —— 图标一行、分类名一行，整组水平居中。
+   折叠态不受影响（选择器用 `:not(.collapsed)` 限定，折叠态仍是单图标居中 + 悬浮胶囊）。
+
+   度量：原库横排是 `.main-menu a{padding:13px 5px}`、内容 19px ⇒ 每项 46px；
+   改竖排后 padding 收到 10px、图标与文字间距 4px ⇒ 10+19+4+19+10 = **62px**。
+
+   三个必须一起改的连带项（不改就会歪）：
+     1. `.main-menu a>i{margin-right:10px}` —— 那是横排的间距，竖排要归零；
+     2. `.main-menu a>i+span{padding-right:10px}` —— 同上；
+     3. 「关于本站」那项带 `<span class="label pull-right">♥︎</span>`，在 flex column 里
+        float 失效会掉成第三行、把这一项撑得比别人高，这里隐藏掉。
+
+   滚动：每项 46→62px 后，12 项 + logo ≈ 844px，视口矮于约 860px 就会超出。
+   xenon 的 `.sidebar-menu.fixed .sidebar-menu-inner` 是 `overflow:hidden`
+   （原设计靠 perfect-scrollbar，本站没引入那个脚本），不放开滚动的话最后几项会被直接裁掉。
+   ⚠️ 只对展开态放开：折叠态必须保持 inner 的 `overflow:visible`，否则悬浮分类名胶囊
+   （`left:100%`，伸出 40px 栏外）会被裁掉。
+   ========================================================================== */
+@media screen and (min-width: 768px) {
+    .sidebar-menu:not(.collapsed) .main-menu>li>a {
+        display: -webkit-box;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-box-orient: vertical;
+        -webkit-box-direction: normal;
+        -ms-flex-direction: column;
+        flex-direction: column;
+        -webkit-box-align: center;
+        -ms-flex-align: center;
+        align-items: center;
+        -webkit-box-pack: center;
+        -ms-flex-pack: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 10px 5px;
+        text-align: center;
+    }
+
+    .sidebar-menu:not(.collapsed) .main-menu>li>a>i {
+        margin-right: 0;
+    }
+
+    .sidebar-menu:not(.collapsed) .main-menu>li>a>i+span {
+        padding-right: 0;
+    }
+
+    .sidebar-menu:not(.collapsed) .main-menu>li>a>.label {
+        display: none;
+    }
+
+    .sidebar-menu.fixed:not(.collapsed) .sidebar-menu-inner {
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    .sidebar-menu.fixed:not(.collapsed) .sidebar-menu-inner::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .sidebar-menu.fixed:not(.collapsed) .sidebar-menu-inner::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .sidebar-menu.fixed:not(.collapsed) .sidebar-menu-inner::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, .18);
+        border-radius: 3px;
+    }
 }

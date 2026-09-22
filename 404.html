@@ -1,219 +1,133 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN" data-theme="dark">
 
 <head>
     <meta charset="utf-8">
-    <title>webstack - 404</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0" />
-    <link rel="shortcut icon" href="./assets/images/favicon.png">
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-77253689-1"></script>
-    
-    <script>
-    var _hmt = _hmt || [];
-    (function() {
-      var hm = document.createElement("script");
-      hm.src = "https://hm.baidu.com/hm.js?c05bb16ea908292af9f6c513087a1cc3";
-      var s = document.getElementsByTagName("script")[0]; 
-      s.parentNode.insertBefore(hm, s);
-    })();
-    </script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-
-    function gtag() {
-        dataLayer.push(arguments);
-    }
-    gtag('js', new Date());
-
-    gtag('config', 'UA-77253689-1');
-    </script>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="tonny" />
+    <title>404 · 页面不存在</title>
+    <!-- 角标取自原站 chenn.com.cn 的 assets/img/logo.png（粉色字标 Chenn）；404 页不参与 SEO，标题保持独立 -->
+    <link rel="icon" href="./assets/images/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" href="./assets/images/favicon.png" sizes="32x32">
+    <link rel="apple-touch-icon" href="./assets/images/favicon-180.png">
     <style>
+    * {
+        box-sizing: border-box;
+    }
+
     html,
     body {
-        width: 100%;
         height: 100%;
+        margin: 0;
     }
-    
-    a,
-    a img,
-    a:before,
-    a:after {
-        text-decoration: none;
-        transition-duration: .25s;
-    }
-    
-    section {
-        display: block;
-    }
-    
+
     body {
-        line-height: 1;
-    }
-    
-    #about {
-        width: 40%;
-        position: absolute;
-        top: 40%;
-        left: 10%;
-        z-index: 20;
-        transform: translate(0, -50%);
-    }
-    
-    #about h1 {
-        margin: 30px;
-    }
-    
-    #about p {
-        margin: 30px;
-    }
-    
-    #about img {
-        margin-left: 30px;
-    }
-    
-    #about .social {
-        float: left;
-        margin: 30px;
-    }
-    
-    #about .copyright {
-        width: 100%;
-        float: left;
-        margin-bottom: 0px;
-    }
-    
-    @media (max-width: 768px) {
-        #about {
-            width: 100%;
-            left: 0px;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.85);
-        }
-        #about h1 {
-            margin: 30px;
-        }
-        #about p {
-            margin: 30px;
-        }
-        #about .social {
-            margin: 30px;
-        }
-        #about .copyright {
-            width: 100%;
-            float: left;
-            margin-bottom: 0px;
-        }
-    }
-    
-    @media (max-width: 580px) {
-        #about {
-            width: 100%;
-            left: 0px;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.85);
-        }
-        #about h1 {
-            margin: 30px;
-        }
-        #about p {
-            margin: 30px;
-            margin-bottom: 0;
-        }
-        #about .social {
-            margin: 30px;
-            margin-bottom: 0;
-        }
-        #about .copyright {
-            width: 100%;
-            float: left;
-            margin-bottom: 0;
-        }
-    }
-    
-    .animated {
-        animation-duration: 1s;
-        animation-fill-mode: both;
-    }
-    
-    .bounce-in {
-        animation-name: bounce-in;
-    }
-    
-    @keyframes bounce-in {
-        from,
-        60%,
-        75%,
-        90%,
-        to {
-            animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
-        }
-        0% {
-            opacity: 0;
-            transform: translate3d(-3000px, -50%, 0);
-        }
-        60% {
-            opacity: 1;
-            transform: translate3d(25px, -50%, 0);
-        }
-        75% {
-            transform: translate3d(-10px, -50%, 0);
-        }
-        90% {
-            transform: translate3d(5px, -50%, 0);
-        }
-        to {
-            transform: translate3d(0, -50%);
-        }
-    }
-    
-    body {
-        font-family: "Roboto", sans-serif;
-        font-size: 16px;
+        background: #14161a;
+        color: #e6eaf0;
+        font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
         font-weight: 300;
         line-height: 1.75;
-        color: rgba(0, 0, 0, 0.65);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 24px;
     }
-    
-    h1 {
-        font-family: "Merriweather", sans-serif;
-        font-size: 50px;
+
+    .box {
+        max-width: 560px;
+        width: 100%;
+    }
+
+    .code {
+        font-size: 84px;
         font-weight: 700;
-        line-height: 1.25;
-        color: rgba(0, 0, 0, 0.85);
-        margin-bottom: 25px;
+        line-height: 1;
+        letter-spacing: 4px;
+        margin: 0 0 18px;
+        background: linear-gradient(135deg, #4d90fe, #9cc4ff);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
     }
-    
-    a {
-        color: rgba(3, 3, 3, 0.85);
-        font-weight: 600;
+
+    p {
+        margin: 0 0 8px;
+        color: #a4aebb;
+        font-size: 15px;
     }
-    
-    @media (max-width: 580px) {
-        body {
-            font-size: 14px;
-        }
-        h1 {
-            font-size: 42px;
-            line-height: 1.45;
-        }
+
+    .actions {
+        margin-top: 28px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
     }
-    
-    .bg-align {
-        margin-top: 50%;
+
+    a.btn {
+        display: inline-block;
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        border: 1px solid #2b323d;
+        color: #e6eaf0;
+        -webkit-transition: all .2s ease;
+        transition: all .2s ease;
+    }
+
+    a.btn:hover {
+        border-color: #3d4756;
+        background: #1e232c;
+    }
+
+    a.btn.primary {
+        background: #4d90fe;
+        border-color: #4d90fe;
+        color: #fff;
+    }
+
+    a.btn.primary:hover {
+        background: #3b82f6;
+        border-color: #3b82f6;
     }
     </style>
 </head>
 
 <body>
-    <section id="about" class="animated bounce-in">
-        <div class="bg-align">
-            <h1>404</h1>
-            <p>Oops! It looks like you're lost...</p>
-            <p>The Page you're looking for doesn't exist or another error occurred.</p>
-            <p><a href="http://webstack.cc">👉  webstack.cc</a></p>
+    <div class="box">
+        <h1 class="code">404</h1>
+        <p>你要找的页面不存在，或者链接已经失效。</p>
+        <p>可以回到导航首页，从分类里重新找一个入口。</p>
+        <div class="actions">
+            <a class="btn primary" id="home" href="./cn/index.html">回到导航首页</a>
+            <a class="btn" href="#" id="back">返回上一页</a>
         </div>
-    </section>
+    </div>
+
+    <script>
+    (function() {
+        var home = document.getElementById('home');
+        var back = document.getElementById('back');
+
+        // GitHub Pages 项目页的站点根是 /仓库名/，按当前路径首段推断
+        try {
+            if (/(^|\.)github\.io$/i.test(location.hostname)) {
+                var segs = location.pathname.split('/').filter(Boolean);
+                if (segs.length) home.setAttribute('href', '/' + segs[0] + '/cn/index.html');
+            }
+        } catch (e) {}
+
+        if (back) {
+            back.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (history.length > 1) history.back();
+                else location.href = home.getAttribute('href');
+            });
+        }
+    })();
+    </script>
 </body>
 
 </html>
